@@ -1,0 +1,6 @@
+nextcord
+pymongo
+aiohttp
+trueskill
+Flask
+requests
