@@ -7,6 +7,7 @@ from config import LEADER_CSV_PATH
 
 logger = logging.getLogger("LeaderParser")
 NON_WORD = re.compile(r"[^\wÀ-ú\-]+")
+TYPES_OF_CIV = ['naval', 'culture', 'science', 'war', 'generalist', 'monumentality']
 
 class Leaders:
     def __init__(self, leaders_):
@@ -58,8 +59,12 @@ class Leader:
         self.emoji_id = int(emoji_id)
         self.uuname = uuname
         self.civ = civ
-        self.alias = alias
-        self.all_name = [i.lower() for i in [uuname, civ, *alias]]
+        self.type_of_civ = 'generalist'
+        has_a_civ_type = [item for item in alias if item in TYPES_OF_CIV]
+        if (len(has_a_civ_type) > 0):
+           self.type_of_civ = has_a_civ_type[0]
+        self.alias = [item for item in alias if item not in TYPES_OF_CIV]
+        self.all_name = [i.lower() for i in [uuname, civ, *self.alias]]
 
     def __repr__(self):
         return f"<Leader: {self.uuname}>"
@@ -88,6 +93,5 @@ def load_leaders() -> Leaders:
         leaders_array = csv.reader(fd, delimiter=',')
         leaders_ = Leaders([Leader(*leader_array) for leader_array in leaders_array])
     return leaders_
-
 
 leaders = load_leaders()

@@ -6,7 +6,7 @@ from typing import Iterable, List, Dict, Optional, Tuple
 
 from .abcModule import abcModule
 
-from Leaders import leaders, Leader
+from Leaders import TYPES_OF_CIV, leaders, Leader
 from exc import InvalidArgs,ALEDException, AntiRelouException
 from utils import get_member_in_channel, get_member_by_name
 from constant import NB
@@ -66,7 +66,7 @@ class DraftModule(abcModule):
 
     @classmethod
     def get_raw_draft(cls, nb: int, *args) -> Iterable[List[Leader]]:
-        pool = leaders.leaders[:]
+        pool: List[Leader] = leaders.leaders[:]
         if len(args) >= 1:
             ban_query = args[0].split('.')
             for ban in ban_query:
@@ -85,7 +85,19 @@ class DraftModule(abcModule):
                         "3rd Argument (max civ per draft) must be a integer or \"max\" (exemple: ``.draft 8 Maori.Colombie 4``)")
                 leader_per_player = int(args[1])
         random.shuffle(pool)
-        return (pool[i * leader_per_player:i * leader_per_player + leader_per_player] for i in range(nb))
+        # Cut up the civs by TYPES_OF_CIV so that one team doesn't get all the naval civs
+        results: List[List[Leader]] = [[] for i in range(nb)]
+        i = 0
+        for type in TYPES_OF_CIV:
+            pool_of_type = [civ for civ in pool if civ.type_of_civ == type]
+            for civ in pool_of_type: 
+                results[i % nb].append(civ)
+                i += 1
+        # Remove any extra civs at random. Because we can only have so many civs per player otherwise unfair
+        for result in results:
+            random.shuffle(result)
+        results = [result[:leader_per_player] for result in results]
+        return results
 
     @classmethod
     def get_draft(cls, nb: int, *args, client) -> List[str]:
